@@ -8,10 +8,14 @@ import {
   TouchableHighlight,
   Platform,
   PermissionsAndroid,
+  TextInput,
+  Button,
 } from 'react-native';
 
 import Sound from 'react-native-sound';
 import {AudioRecorder, AudioUtils} from 'react-native-audio';
+
+import * as FS from 'react-native-fs';
 
 class App extends Component {
 
@@ -21,15 +25,15 @@ class App extends Component {
       paused: false,
       stoppedRecording: false,
       finished: false,
-      audioPath: AudioUtils.DocumentDirectoryPath + '/test.aac',
       hasPermission: undefined,
+      audioPath: FS.CachesDirectoryPath + '/temp.aac',
     };
 
     prepareRecordingPath(audioPath){
       AudioRecorder.prepareRecordingAtPath(audioPath, {
         SampleRate: 22050,
         Channels: 1,
-        AudioQuality: "Low",
+        AudioQuality: "High",
         AudioEncoding: "aac",
         AudioEncodingBitRate: 32000
       });
@@ -37,7 +41,7 @@ class App extends Component {
 
     componentDidMount() {
       this._checkPermission().then((hasPermission) => {
-        this.setState({ hasPermission });
+        this.setState({ hasPermission, audioPath: FS.ExternalDirectoryPath + '/test.aac' });
 
         if (!hasPermission) return;
 
@@ -183,6 +187,7 @@ class App extends Component {
       }
 
       if(this.state.stoppedRecording){
+        console.log(this.state.audioPath);
         this.prepareRecordingPath(this.state.audioPath);
       }
 
@@ -200,10 +205,30 @@ class App extends Component {
       console.log(`Finished recording of duration ${this.state.currentTime} seconds at path: ${filePath}`);
     }
 
+    // handleTextInput(text) {
+    //   this.setState({
+    //     name: (text === '' ? 'test' : text),
+    //   });
+    //   this.setState({ audioPath: FS.ExternalDirectoryPath + '/' + text + '.aac' });  
+    // }
+
+    handleButtonPress() {
+      FS.readFile(FS.CachesDirectoryPath + '/test.aac','base64').then((data) => {
+        console.log(data);
+      });
+    }
+
     render() {
 
       return (
         <View style={styles.container}>
+          {/* <TextInput 
+            underlineColorAndroid='#FFF' 
+            placeholder="Enter filename - Default : 'test'" 
+            style={styles.textInput}
+            onChangeText={this.handleTextInput}
+          /> */}
+          <Button style={styles.textInput} onPress={this.handleButtonPress} title='Log base64'></Button>
           <View style={styles.controls}>
             {this._renderButton("RECORD", () => {this._record()}, this.state.recording )}
             {this._renderButton("PLAY", () => {this._play()} )}
@@ -244,8 +269,13 @@ class App extends Component {
     activeButtonText: {
       fontSize: 20,
       color: "#B81F00"
+    },
+    textInput: {
+      backgroundColor: '#FFF',
+      alignItems: 'center',
+      padding: 5,
+      margin: 10,
     }
-
   });
 
 export default App;
